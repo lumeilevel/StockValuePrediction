@@ -10,6 +10,7 @@ import re
 import random
 import warnings
 from bs4 import BeautifulSoup
+import tensorflow as tf
 
 raw = 'data/news.txt'
 train = 'data/train.txt'
@@ -29,50 +30,55 @@ def processContent(content):
     return news
 
 
-def bertData(validation_split=0.1):
+def bertData():
     f = codecs.open(raw, "r", "utf-8")
     news = [processContent(i) for i in f.readlines()]
     f.close()
-    # shuffle news first
-    random.shuffle(news)
     # convert it to a dictionary with `id` as key
     news = {str(d['id']): (d['title'], d['content']) for d in news}
-    # trainID = dict.fromkeys(news, 0)
-    # testID = dict.fromkeys(news, 0)
-    # # count the number of times each news appears in train and test
-    # with codecs.open(train, 'r', 'utf-8') as f:
-    #     for line in f.readlines():
-    #         trainID[processContent(line)] += 1
     return news
 
 
-def countID(news, dataDir):
+def getRawData(news, dataDir):
     name = dataDir[5:-4]
-    # count the number of times each news appears in train or test
-    numID = dict.fromkeys(news, 0)
     with codecs.open(dataDir, 'r', 'utf-8') as f:
         if name == 'train':
-            lines = [i.split()[1].split(',') for i in f.readlines()]
+            lines = [(i.split()[1].split(','), (eval(i.split()[0]) + 1) // 2) for i in f.readlines()]
         else:
             lines = [i.strip().split(',') for i in f.readlines()]
-    print('Maximum number of news for each group in {}: {}'.format(name, max(len(i) for i in lines)))
-    print('Minimum number of news for each group in {}: {}'.format(name, min(len(i) for i in lines)))
-    for line in lines:
-        for i in line:
-            numID[i] += 1
-    print('Maximum number of times a news appears in {}: {}'.format(name, max(numID.values())))
-    print('Minimum number of times a news appears in {}: {}'.format(name, min(numID.values())))
-    return numID
+    return lines
 
 
 def eda(news):
     # print the number of news
     print("Total number of news: {}".format(len(news)))
-    trainID = countID(news, train)
-    testID = countID(news, test)
-    return trainID, testID
+    rawTrain = getRawData(news, train)
+    rawTest = getRawData(news, test)
+    print('Maximum number of news for each group in training set: {}'.format(max(len(i[0]) for i in rawTrain)))
+    print('Minimum number of news for each group in training set: {}'.format(min(len(i[0]) for i in rawTrain)))
+    print('Maximum number of news for each group in test set: {}'.format(max(len(i) for i in rawTest)))
+    print('Minimum number of news for each group in test set: {}'.format(min(len(i) for i in rawTest)))
+    numTrainID = dict.fromkeys(news, 0)
+    numTestID = dict.fromkeys(news, 0)
+    for line in rawTrain:
+        for i in line[0]:
+            numTrainID[i] += 1
+    for line in rawTest:
+        for i in line:
+            numTestID[i] += 1
+    print('Maximum number of times a news appears in training set: {}'.format(max(numTrainID.values())))
+    print('Minimum number of times a news appears in training set: {}'.format(min(numTrainID.values())))
+    print('Maximum number of times a news appears in test set: {}'.format(max(numTestID.values())))
+    print('Minimum number of times a news appears in test set: {}'.format(min(numTestID.values())))
+    return rawTrain, rawTest, numTrainID, numTestID
 
 
-news = bertData()
-numTrainID, numTestID = eda(news)
+def getValidData(rawTrain, validation_split=0.1):
+    random.shuffle(rawTrain)
+    split = int(len(rawTrain) * (1 - validation_split))
+    return rawTrain[:split], rawTrain[split:]
 
+
+raw_ds = {'news': bertData()}
+raw_ds['train'], raw_ds['test'], numTrainID, numTestID = eda(raw_ds['news'])
+raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'])
