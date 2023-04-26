@@ -8,9 +8,13 @@
 import tensorflow as tf
 import tensorflow_hub as hub
 
-bert_model_name = 'small_bert/bert_en_uncased_L-4_H-512_A-8'
+# bert_model_name = 'small_bert/bert_en_uncased_L-4_H-512_A-8'
+bert_model_name = 'bert_zh_L-12_H-768_A-12/4'
+# bert_model_name = 'small_bert/bert_en_uncased_L-2_H-128_A-2'
 
 map_name_to_handle = {
+    'bert_zh_L-12_H-768_A-12/4':
+        'https://tfhub.dev/tensorflow/bert_zh_L-12_H-768_A-12/4',
     'bert_en_uncased_L-12_H-768_A-12':
         'https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/3',
     'bert_en_cased_L-12_H-768_A-12':
@@ -80,6 +84,8 @@ map_name_to_handle = {
 }
 
 map_model_to_preprocess = {
+    'bert_zh_L-12_H-768_A-12/4':
+        'https://tfhub.dev/tensorflow/bert_zh_preprocess/3',
     'bert_en_uncased_L-12_H-768_A-12':
         'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
     'bert_en_cased_L-12_H-768_A-12':
@@ -160,10 +166,11 @@ class BertModel(tf.keras.Model):
         self.content_classifier = tf.keras.layers.Dense(content, activation='relu', name='content_classifier')
         self.classifier = tf.keras.layers.Dense(1, activation='sigmoid', name='combined_classifier')
 
-    def call(self, inputs, **kwargs):
-        title, content = inputs
-        title = self.preprocessing_layer(title)
-        content = self.preprocessing_layer(content)
+    def call(self, inputs):
+        title = inputs[:, 0]
+        content = inputs[:, 1]
+        title = self.preprocessing_layer([title])
+        content = self.preprocessing_layer([content])
         # title = self.encoder_layer(title)
         # content = self.encoder_layer(content)
         title = self.encoder_layer(title)['pooled_output']

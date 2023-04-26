@@ -24,7 +24,7 @@ def processContent(content):
         news['title'] = BeautifulSoup(news['title'], 'html.parser').get_text().replace('\n', '')
         news['content'] = BeautifulSoup(news['content'], 'html.parser').get_text().replace('\n', '')
     news['content'] = re.sub(r'\s+', '', news['content'])
-    stopWords = "：，。；、（）【】“”‘’《》？！①②③④⑤⑥⑦⑧⑨⑩(),"
+    stopWords = "：，。；、（）【】“”‘’《》①②③④⑤⑥⑦⑧⑨⑩(),"
     for i in stopWords:
         news['content'] = news['content'].replace(i, '')
     return news
