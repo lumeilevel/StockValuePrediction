@@ -39,7 +39,7 @@ def bertData():
     return news
 
 
-def getRawData(news, dataDir):
+def getRawData(dataDir):
     name = dataDir[5:-4]
     with codecs.open(dataDir, 'r', 'utf-8') as f:
         if name == 'train':
@@ -52,8 +52,8 @@ def getRawData(news, dataDir):
 def eda(news):
     # print the number of news
     print("Total number of news: {}".format(len(news)))
-    rawTrain = getRawData(news, train)
-    rawTest = getRawData(news, test)
+    rawTrain = getRawData(train)
+    rawTest = getRawData(test)
     print('Maximum number of news for each group in training set: {}'.format(max(len(i[0]) for i in rawTrain)))
     print('Minimum number of news for each group in training set: {}'.format(min(len(i[0]) for i in rawTrain)))
     print('Maximum number of news for each group in test set: {}'.format(max(len(i) for i in rawTest)))

@@ -171,8 +171,6 @@ class BertModel(tf.keras.Model):
         content = inputs[:, 1]
         title = self.preprocessing_layer([title])
         content = self.preprocessing_layer([content])
-        # title = self.encoder_layer(title)
-        # content = self.encoder_layer(content)
         title = self.encoder_layer(title)['pooled_output']
         content = self.encoder_layer(content)['pooled_output']
         title = self.title_classifier(title)
@@ -189,3 +187,21 @@ def load_handle(model_name=bert_model_name):
     print(f'Preprocess model auto-selected: {tfhub_handle_preprocess}')
     return tfhub_handle_encoder, tfhub_handle_preprocess
 
+
+def build_classifier_model(tfhub_handle_preprocess, tfhub_handle_encoder, title_units, content_units, fine_tune=True):
+    text_input = tf.keras.layers.Input(shape=(2,), dtype=tf.string, name='text')
+    title = text_input[:, 0]
+    content = text_input[:, 1]
+    preprocessing_layer = hub.KerasLayer(tfhub_handle_preprocess, name='preprocessing')
+    encoder_inputs_title = preprocessing_layer(title)
+    encoder_inputs_content = preprocessing_layer(content)
+    encoder = hub.KerasLayer(tfhub_handle_encoder, trainable=not fine_tune, name='BERT_encoder')
+    outputs_title = encoder(encoder_inputs_title)
+    outputs_content = encoder(encoder_inputs_content)
+    net_title = outputs_title['pooled_output']
+    net_content = outputs_content['pooled_output']
+    net_title = tf.keras.layers.Dense(title_units, activation='relu', name='classifierT')(net_title)
+    net_content = tf.keras.layers.Dense(content_units, activation='relu', name='classifierC')(net_content)
+    net = tf.keras.layers.concatenate([net_title, net_content])
+    net = tf.keras.layers.Dense(1, activation=None, name='classifier')(net)
+    return tf.keras.Model(text_input, net)
