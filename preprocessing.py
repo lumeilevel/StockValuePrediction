@@ -24,7 +24,8 @@ def processContent(content):
         news['title'] = BeautifulSoup(news['title'].lower(), 'html.parser').get_text().replace('\n', '')
         news['content'] = BeautifulSoup(news['content'].lower(), 'html.parser').get_text().replace('\n', '')
     news['content'] = re.sub(r'\s+', '', news['content'])
-    stopWords = "：，。；、（）【】“”‘’《》①②③④⑤⑥⑦⑧⑨⑩(),&的个并且么之也些于以诸等们乎而和即及叫吧呀呗呵哪尔拿"
+    stopWords = "：，。；;、（）【】“”‘’《》?？！!~`·<>#￥$@*^_|/——①②③④⑤⑥⑦⑧⑨⑩(),&的个并且么之也些于以诸等们乎而和即及叫吧呀呗呵哪" \
+                "尔拿宁你我他她它将就尽已得彼怎打把被替故某着给若虽让赶起然那随除出儿"
     for i in stopWords:
         news['content'] = news['content'].replace(i, '')
     return news
@@ -79,13 +80,14 @@ def getValidData(rawTrain, validation_split=0.1):
     return rawTrain[:split], rawTrain[split:]
 
 
-def getScore(raw_train, raw_valid):
+def id2Vec(train, test, score):
+    pass
+
+
+def getScore(raw_train):
     # get the score of each news
     score_dict = [defaultdict(int) for _ in range(2)]
     for i in raw_train:
-        for j in i[0]:
-            score_dict[i[1]][j] += 1
-    for i in raw_valid:
         for j in i[0]:
             score_dict[i[1]][j] += 1
     return {k: score_dict[1][k] / (v + score_dict[1][k]) for k, v in score_dict[0].items()}
@@ -99,8 +101,14 @@ def getDistribution(raw_train, raw_valid):
     return trainD, validD, totalD
 
 
-raw_ds = {'news': bertData()}
-raw_ds['train'], raw_ds['test'], numTrainID, numTestID = eda(raw_ds['news'])
-raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'])
-raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])
-raw_ds['score'] = getScore(raw_ds['train'], raw_ds['valid'])
+def preprocess(model):
+    raw_ds = {'news': bertData()}
+    raw_ds['train'], raw_ds['test'], numTrainID, numTestID = eda(raw_ds['news'])
+    if model == 'bert':
+        raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'])
+    elif model == 'tfcm':
+        raw_ds['score'] = getScore(raw_ds['train'])
+    else:
+        raise ValueError('Invalid model name!')
+    raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])
+    return raw_ds

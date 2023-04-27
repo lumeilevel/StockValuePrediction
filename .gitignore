@@ -1,5 +1,5 @@
 # dataset for this assignment
-#data/
+data/stopwords-master/
 
 # Tensorboard logging directory
 logs/
