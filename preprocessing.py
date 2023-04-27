@@ -10,7 +10,7 @@ import re
 import random
 import warnings
 from bs4 import BeautifulSoup
-import tensorflow as tf
+from collections import defaultdict
 
 raw = 'data/news.txt'
 train = 'data/train.txt'
@@ -21,10 +21,10 @@ def processContent(content):
     news = eval(content)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        news['title'] = BeautifulSoup(news['title'], 'html.parser').get_text().replace('\n', '')
-        news['content'] = BeautifulSoup(news['content'], 'html.parser').get_text().replace('\n', '')
+        news['title'] = BeautifulSoup(news['title'].lower(), 'html.parser').get_text().replace('\n', '')
+        news['content'] = BeautifulSoup(news['content'].lower(), 'html.parser').get_text().replace('\n', '')
     news['content'] = re.sub(r'\s+', '', news['content'])
-    stopWords = "：，。；、（）【】“”‘’《》①②③④⑤⑥⑦⑧⑨⑩(),"
+    stopWords = "：，。；、（）【】“”‘’《》①②③④⑤⑥⑦⑧⑨⑩(),&的个并且么之也些于以诸等们乎而和即及叫吧呀呗呵哪尔拿"
     for i in stopWords:
         news['content'] = news['content'].replace(i, '')
     return news
@@ -79,6 +79,28 @@ def getValidData(rawTrain, validation_split=0.1):
     return rawTrain[:split], rawTrain[split:]
 
 
+def getScore(raw_train, raw_valid):
+    # get the score of each news
+    score_dict = [defaultdict(int) for _ in range(2)]
+    for i in raw_train:
+        for j in i[0]:
+            score_dict[i[1]][j] += 1
+    for i in raw_valid:
+        for j in i[0]:
+            score_dict[i[1]][j] += 1
+    return {k: score_dict[1][k] / (v + score_dict[1][k]) for k, v in score_dict[0].items()}
+
+
+def getDistribution(raw_train, raw_valid):
+    # get the distribution of the split training set and validation set
+    trainD = (sum(v[1] == 0 for v in raw_train), sum(v[1] == 1 for v in raw_train), len(raw_train))
+    validD = (sum(v[1] == 0 for v in raw_valid), sum(v[1] == 1 for v in raw_valid), len(raw_valid))
+    totalD = (trainD[0] + validD[0], trainD[1] + validD[1], trainD[2] + validD[2])
+    return trainD, validD, totalD
+
+
 raw_ds = {'news': bertData()}
 raw_ds['train'], raw_ds['test'], numTrainID, numTestID = eda(raw_ds['news'])
 raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'])
+raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])
+raw_ds['score'] = getScore(raw_ds['train'], raw_ds['valid'])

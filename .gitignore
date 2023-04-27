@@ -1,6 +1,9 @@
 # dataset for this assignment
 #data/
 
+# Tensorboard logging directory
+logs/
+
 # irrelevant notebook
 test.ipynb
 

@@ -200,8 +200,8 @@ def build_classifier_model(tfhub_handle_preprocess, tfhub_handle_encoder, title_
     outputs_content = encoder(encoder_inputs_content)
     net_title = outputs_title['pooled_output']
     net_content = outputs_content['pooled_output']
-    net_title = tf.keras.layers.Dense(title_units, activation='relu', name='classifierT')(net_title)
-    net_content = tf.keras.layers.Dense(content_units, activation='relu', name='classifierC')(net_content)
+    net_title = tf.keras.layers.Dense(title_units, activation='relu', name='title_classifier')(net_title)
+    net_content = tf.keras.layers.Dense(content_units, activation='relu', name='content_classifier')(net_content)
     net = tf.keras.layers.concatenate([net_title, net_content])
-    net = tf.keras.layers.Dense(1, activation=None, name='classifier')(net)
+    net = tf.keras.layers.Dense(1, activation='sigmoid', name='classifier')(net)
     return tf.keras.Model(text_input, net)
