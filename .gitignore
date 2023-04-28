@@ -4,8 +4,8 @@ data/stopwords-master/
 # Tensorboard logging directory
 logs/
 
-# irrelevant notebook
-test.ipynb
+# irrelevant reference
+reference/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

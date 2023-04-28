@@ -24,8 +24,8 @@ def processContent(content):
         news['title'] = BeautifulSoup(news['title'].lower(), 'html.parser').get_text().replace('\n', '')
         news['content'] = BeautifulSoup(news['content'].lower(), 'html.parser').get_text().replace('\n', '')
     news['content'] = re.sub(r'\s+', '', news['content'])
-    stopWords = "：，。；;、（）【】“”‘’《》?？！!~`·<>#￥$@*^_|/——①②③④⑤⑥⑦⑧⑨⑩(),&的个并且么之也些于以诸等们乎而和即及叫吧呀呗呵哪" \
-                "尔拿宁你我他她它将就尽已得彼怎打把被替故某着给若虽让赶起然那随除出儿"
+    stopWords = "：，。；;、（）【】“”‘’《》?？！!~`·<>#￥$@*^_|/——①②③④⑤⑥⑦⑧⑨⑩(),&的个并且么之也些于" \
+                "以诸等们乎而和即及叫吧呀呗呵哪尔拿宁你我他她它将就尽已得彼怎打把被替故某着给若虽让赶起然那随除出儿"
     for i in stopWords:
         news['content'] = news['content'].replace(i, '')
     return news
@@ -74,14 +74,22 @@ def eda(news):
     return rawTrain, rawTest, numTrainID, numTestID
 
 
-def getValidData(rawTrain, validation_split=0.1):
-    random.shuffle(rawTrain)
-    split = int(len(rawTrain) * (1 - validation_split))
-    return rawTrain[:split], rawTrain[split:]
+def getValidData(raw_train, model, validation_split=0.1):
+    split = int(len(raw_train) * (1 - validation_split))
+    if model == 'tfcm':
+        raw_train = [(k, v) for k, v in raw_train.items()]
+    else:
+        raise ValueError("Invalid model name!")
+    random.shuffle(raw_train)
+    return raw_train[:split], raw_train[split:]
 
 
-def id2Vec(train, test, score):
-    pass
+def id2vec(raw_train, raw_test, score, validation_split=0.1):
+    trainVec = [[score[ID] for ID in line[0]] for line in raw_train]
+    testVec = [[score[ID] for ID in line] for line in raw_test]
+    random.shuffle(trainVec)
+    split = int(len(trainVec) * (1 - validation_split))
+    return trainVec[:split], trainVec[split:], testVec
 
 
 def getScore(raw_train):
@@ -90,6 +98,7 @@ def getScore(raw_train):
     for i in raw_train:
         for j in i[0]:
             score_dict[i[1]][j] += 1
+            score_dict[1 - i[1]][j] += 0
     return {k: score_dict[1][k] / (v + score_dict[1][k]) for k, v in score_dict[0].items()}
 
 
@@ -105,10 +114,14 @@ def preprocess(model):
     raw_ds = {'news': bertData()}
     raw_ds['train'], raw_ds['test'], numTrainID, numTestID = eda(raw_ds['news'])
     if model == 'bert':
-        raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'])
+        raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'], 'bert')
     elif model == 'tfcm':
         raw_ds['score'] = getScore(raw_ds['train'])
+        raw_ds['test_reg'] = set([ID for line in raw_ds['test'] for ID in line if ID not in raw_ds['score']])
+        raw_ds['train_reg'], raw_ds['valid_reg'] = getValidData(raw_ds['score'], 'tfcm')
+        # raw_ds['trainVec'], raw_ds['validVec'], raw_ds['testVec'] =
+        # id2Vec(raw_ds['train'], raw_ds['test'], raw_ds['score'])
     else:
         raise ValueError('Invalid model name!')
-    raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])
+    # raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])
     return raw_ds
