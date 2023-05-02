@@ -84,12 +84,11 @@ def getValidData(raw_train, model, validation_split=0.1):
     return raw_train[:split], raw_train[split:]
 
 
-def id2vec(raw_train, raw_test, score, validation_split=0.1):
+def id2vec(raw_train, score, validation_split=0.1):
     trainVec = [[score[ID] for ID in line[0]] for line in raw_train]
-    testVec = [[score[ID] for ID in line] for line in raw_test]
     random.shuffle(trainVec)
     split = int(len(trainVec) * (1 - validation_split))
-    return trainVec[:split], trainVec[split:], testVec
+    return trainVec[:split], trainVec[split:]
 
 
 def getScore(raw_train):
@@ -119,8 +118,7 @@ def preprocess(model):
         raw_ds['score'] = getScore(raw_ds['train'])
         raw_ds['test_reg'] = set([ID for line in raw_ds['test'] for ID in line if ID not in raw_ds['score']])
         raw_ds['train_reg'], raw_ds['valid_reg'] = getValidData(raw_ds['score'], 'tfcm')
-        # raw_ds['trainVec'], raw_ds['validVec'], raw_ds['testVec'] =
-        # id2Vec(raw_ds['train'], raw_ds['test'], raw_ds['score'])
+        raw_ds['train'], raw_ds['valid'] = id2vec(raw_ds['train'], raw_ds['score'])
     else:
         raise ValueError('Invalid model name!')
     # raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])

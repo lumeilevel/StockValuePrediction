@@ -4,8 +4,11 @@ data/stopwords-master/
 # Tensorboard logging directory
 logs/
 
-# irrelevant reference
+# Irrelevant reference
 reference/
+
+# Model structure
+model/structure/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
