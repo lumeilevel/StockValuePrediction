@@ -6,15 +6,12 @@
 # @Project  : StockValuePrediction
 
 import codecs
-import re
 import random
+import re
 import warnings
-from bs4 import BeautifulSoup
 from collections import defaultdict
 
-raw = 'data/news.txt'
-train = 'data/train.txt'
-test = 'data/test.txt'
+from bs4 import BeautifulSoup
 
 
 def processContent(content):
@@ -31,26 +28,24 @@ def processContent(content):
     return news
 
 
-def bertData():
-    f = codecs.open(raw, "r", "utf-8")
-    news = [processContent(i) for i in f.readlines()]
-    f.close()
+def bertData(raw='./data/news.txt'):
+    with codecs.open(raw, "r", "utf-8") as f:
+        news = [processContent(i) for i in f.readlines()]
     # convert it to a dictionary with `id` as key
     news = {str(d['id']): (d['title'], d['content']) for d in news}
     return news
 
 
 def getRawData(dataDir):
-    name = dataDir[5:-4]
     with codecs.open(dataDir, 'r', 'utf-8') as f:
-        if name == 'train':
+        if dataDir[7:-4] == 'train':
             lines = [(i.split()[1].split(','), (eval(i.split()[0]) + 1) // 2) for i in f.readlines()]
         else:
             lines = [i.strip().split(',') for i in f.readlines()]
     return lines
 
 
-def eda(news):
+def eda(news, train='./data/train.txt', test='./data/test.txt'):
     # print the number of news
     print("Total number of news: {}".format(len(news)))
     rawTrain = getRawData(train)

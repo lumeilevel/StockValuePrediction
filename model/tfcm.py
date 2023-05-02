@@ -30,8 +30,8 @@ def build_regression_model(
     outputs_content = encoder(encoder_inputs_content)
     net_title = outputs_title['pooled_output']
     net_content = outputs_content['pooled_output']
-    net_title = tf.keras.layers.Dense(title_units, activation='relu', name='title')(net_title)
-    net_content = tf.keras.layers.Dense(content_units, activation='relu', name='content')(net_content)
+    net_title = tf.keras.layers.Dense(title_units, activation='elu', name='title')(net_title)
+    net_content = tf.keras.layers.Dense(content_units, activation='elu', name='content')(net_content)
     net = tf.keras.layers.concatenate([net_title, net_content])
     net = tf.keras.layers.Dense(1, activation='sigmoid', name='regression')(net)
     return tf.keras.Model((title, content), net)
