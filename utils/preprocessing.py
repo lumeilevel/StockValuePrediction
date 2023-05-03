@@ -11,6 +11,7 @@ import re
 import warnings
 from collections import defaultdict
 
+import numpy as np
 from bs4 import BeautifulSoup
 
 
@@ -80,10 +81,12 @@ def getValidData(raw_train, model, validation_split=0.1):
 
 
 def id2vec(raw_train, score, validation_split=0.1):
-    trainVec = [[score[ID] for ID in line[0]] for line in raw_train]
-    random.shuffle(trainVec)
+    trainVec = np.asarray([[score[ID] for ID in line[0]] for line in raw_train], dtype=list)
+    labels = np.asarray([line[1] for line in raw_train])
+    np.random.shuffle(idx := list(range(len(raw_train))))
+    trainVec, labels = trainVec[idx], labels[idx]
     split = int(len(trainVec) * (1 - validation_split))
-    return trainVec[:split], trainVec[split:]
+    return (trainVec[:split], labels[:split]), (trainVec[split:], labels[split:])
 
 
 def getScore(raw_train):
@@ -109,12 +112,12 @@ def preprocess(model):
     raw_ds['train'], raw_ds['test'], numTrainID, numTestID = eda(raw_ds['news'])
     if model == 'bert':
         raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'], 'bert')
+        raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])
     elif model == 'tfcm':
         raw_ds['score'] = getScore(raw_ds['train'])
         raw_ds['test_reg'] = set([ID for line in raw_ds['test'] for ID in line if ID not in raw_ds['score']])
         raw_ds['train_reg'], raw_ds['valid_reg'] = getValidData(raw_ds['score'], 'tfcm')
-        raw_ds['train'], raw_ds['valid'] = id2vec(raw_ds['train'], raw_ds['score'])
+        raw_ds['train_cls'], raw_ds['valid_cls'] = id2vec(raw_ds['train'], raw_ds['score'])
     else:
         raise ValueError('Invalid model name!')
-    # raw_ds['distribution'] = getDistribution(raw_ds['train'], raw_ds['valid'])
     return raw_ds

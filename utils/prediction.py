@@ -7,9 +7,12 @@
 
 import os
 
+import numpy as np
 
-def predict(model, data, name='prediction.txt', path='../data/prediction/'):
+
+def predict(model, data, name='prediction.txt', path='./data/prediction/'):
     prediction = model.predict(data)
+    lines = np.vectorize(lambda x: '+1\n' if x > 0.5 else '-1\n')(prediction).flatten().tolist()
     with open(os.path.join(path, name), 'w') as f:
-        for i in prediction:
-            f.write(str(i) + '\n')
+        f.writelines(lines)
+    return prediction

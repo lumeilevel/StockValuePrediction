@@ -7,18 +7,39 @@
 
 import tensorflow as tf
 import tensorflow_hub as hub
+from tensorflow import keras
 
 
-tfhub_handle_preprocess = 'https://hub.tensorflow.google.cn/tensorflow/bert_zh_preprocess/3'
-tfhub_handle_encoder = 'https://hub.tensorflow.google.cn/tensorflow/bert_zh_L-12_H-768_A-12/4'
+def build_classifier_model(
+        input_shape: int,  # shape of input data
+        config: list  # list of dicts, each dict contains the config of a layer
+):
+    model = tf.keras.Sequential([keras.layers.InputLayer(input_shape=(input_shape,))])
+    for layer in config:
+        if layer['regularizer'][0] == 'l1':
+            regularizer = keras.regularizers.l1(layer['regularizer'][1])
+        elif layer['regularizer'][0] == 'l2':
+            regularizer = keras.regularizers.l2(layer['regularizer'][1])
+        elif layer['regularizer'][0] == 'l1_l2':
+            regularizer = keras.regularizers.l1_l2(layer['regularizer'][1], layer['regularizer'][2])
+        else:
+            regularizer = None
+        model.add(keras.layers.Dense(layer['units'], activation=layer['activation'], kernel_regularizer=regularizer))
+        if layer['batch_norm']:
+            model.add(keras.layers.BatchNormalization())
+        if layer['dropout'] > 0:
+            model.add(keras.layers.Dropout(layer['dropout']))
+    model.add(keras.layers.Dense(1, activation='sigmoid'))
+    print(model.summary())
+    return model
 
 
 def build_regression_model(
         title_units,
         content_units,
         fine_tune=True,
-        tfhub_handle_preprocess=tfhub_handle_preprocess,
-        tfhub_handle_encoder=tfhub_handle_encoder
+        tfhub_handle_preprocess='https://hub.tensorflow.google.cn/tensorflow/bert_zh_preprocess/3',
+        tfhub_handle_encoder='https://hub.tensorflow.google.cn/tensorflow/bert_zh_L-12_H-768_A-12/4'
 ):
     title = tf.keras.layers.Input(shape=(), dtype=tf.string, name='title_text')
     content = tf.keras.layers.Input(shape=(), dtype=tf.string, name='content_text')
