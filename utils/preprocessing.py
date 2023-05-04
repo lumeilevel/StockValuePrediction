@@ -74,7 +74,7 @@ def getValidData(raw_train, model, validation_split=0.1):
     split = int(len(raw_train) * (1 - validation_split))
     if model == 'tfcm':
         raw_train = [(k, v) for k, v in raw_train.items()]
-    else:
+    elif model != 'bert':
         raise ValueError("Invalid model name!")
     random.shuffle(raw_train)
     return raw_train[:split], raw_train[split:]

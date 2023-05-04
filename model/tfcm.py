@@ -37,7 +37,7 @@ def build_classifier_model(
 def build_regression_model(
         title_units,
         content_units,
-        final_units,
+        # final_units,
         fine_tune=True,
         tfhub_handle_preprocess='https://hub.tensorflow.google.cn/tensorflow/bert_zh_preprocess/3',
         tfhub_handle_encoder='https://hub.tensorflow.google.cn/tensorflow/bert_zh_L-12_H-768_A-12/4'
@@ -55,6 +55,6 @@ def build_regression_model(
     net_title = tf.keras.layers.Dense(title_units, activation='elu', name='title')(net_title)
     net_content = tf.keras.layers.Dense(content_units, activation='elu', name='content')(net_content)
     net = tf.keras.layers.concatenate([net_title, net_content])
-    net = tf.keras.layers.Dense(final_units, activation='softplus', name='final')(net)
+    # net = tf.keras.layers.Dense(final_units, activation='softplus', name='final')(net)
     net = tf.keras.layers.Dense(1, activation='sigmoid', name='regression')(net)
     return tf.keras.Model((title, content), net)
