@@ -21,7 +21,7 @@ Group Classifier: `w2v.ipynb`.
 To run this project:
 
 ```
-python -m/--model MODELNAME
+python prediction.py -m/--model MODELNAME
 ```
 
 where
