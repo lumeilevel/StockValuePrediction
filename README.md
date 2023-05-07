@@ -15,3 +15,19 @@ Group Classifier: `w2v.ipynb`.
 
 - `prediction.py`
 - `result.txt`
+
+## Usage
+
+To run this project:
+
+```
+python -m/--model MODELNAME
+```
+
+where
+
+```
+MODELNAME = bert/tfcm/w2v
+```
+
+default is `tfcm`.

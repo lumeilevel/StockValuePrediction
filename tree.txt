@@ -1,0 +1,25 @@
+D:.
+│   .gitignore
+│   bert.ipynb
+│   prediction.py
+│   README.md
+│   requirements.txt
+│   tfcm.ipynb
+│   tree.txt
+│   w2v.ipynb
+├───colab
+├───data
+│   │   news.txt
+│   │   test.txt
+│   │   train.txt
+│   ├───prediction
+├───model
+│   │   bert.py
+│   │   tfcm.py
+│   ├───hub_cache
+│   ├───structure
+├───utils
+│   │   prediction.py
+│   │   preprocessing.py
+│   │   visualization.py
+│   │   __init__.py
