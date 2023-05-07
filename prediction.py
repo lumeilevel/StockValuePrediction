@@ -10,6 +10,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_text as text
 from official.nlp import optimization
 from tensorflow import keras
 
