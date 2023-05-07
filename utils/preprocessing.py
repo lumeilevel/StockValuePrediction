@@ -13,6 +13,8 @@ from collections import defaultdict
 
 import numpy as np
 from bs4 import BeautifulSoup
+from gensim.models import KeyedVectors
+from jieba.analyse import extract_tags, textrank
 
 
 def processContent(content, stopWords):
@@ -78,7 +80,7 @@ def getValidData(raw_train, model, validation_split=0.1):
     split = int(len(raw_train) * (1 - validation_split))
     if model == 'tfcm':
         raw_train = [(k, v) for k, v in raw_train.items()]
-    elif model != 'bert':
+    elif model not in ('bert', 'word2vec'):
         raise ValueError("Invalid model name!")
     random.shuffle(raw_train)
     return raw_train[:split], raw_train[split:]
@@ -91,6 +93,43 @@ def id2vec(raw_train, score, validation_split=0.1):
     trainVec, labels = trainVec[idx], labels[idx]
     split = int(len(trainVec) * (1 - validation_split))
     return (trainVec[:split], labels[:split]), (trainVec[split:], labels[split:])
+
+
+def id2mat(cn_model, corpus, titleK=1, contentK=4, extra=5):
+    mat = {}
+    dim = cn_model.vector_size
+    for ID in corpus.keys():
+        title, content = corpus[ID]
+        title_words = extract_tags(title, topK=titleK + extra, withWeight=True)
+        content_words = textrank(content, topK=contentK + extra, withWeight=True)
+
+        titleVec = []
+        k = 0
+        for word, weight in title_words:
+            if word in cn_model:
+                titleVec.append(cn_model[word] * weight)
+                k += 1
+            if k == titleK:
+                break
+        else:
+            # pad titleVec to length titleK
+            titleVec += [np.zeros(dim)] * (titleK - k)
+
+        contentVec = []
+        k = 0
+        for word, weight in content_words:
+            if word in cn_model:
+                contentVec.append(cn_model[word] * weight)
+                k += 1
+            if k == contentK:
+                break
+        else:
+            # pad contentVec to length contentK
+            contentVec += [np.zeros(dim)] * (contentK - k)
+
+        mat[int(ID)] = np.array(titleVec + contentVec)
+    mat[0] = np.zeros((titleK + contentK, dim))
+    return mat
 
 
 def getScore(raw_train):
@@ -123,7 +162,14 @@ def preprocess(model):
         raw_ds['train_reg'], raw_ds['valid_reg'] = getValidData(raw_ds['score'], 'tfcm')
         raw_ds['train_cls'], raw_ds['valid_cls'] = id2vec(raw_ds['train'], raw_ds['score'])
     elif model == 'word2vec':
-        print('Loading word2vec model...')
+        raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'], 'word2vec')
+        print('Loading Word2Vec model...')
+        raw_ds['model'] = KeyedVectors.load_word2vec_format(r'D:\fd\semester5\PRML\PJ\assignment2\Chinese-Word'
+                                                            r'-Vectors-master\tencent-ailab-embedding-zh-d100-v0.2.0'
+                                                            r'\tencent-ailab-embedding-zh-d100-v0.2.0.txt',
+                                                            binary=False)
+        print('Word2vec model loaded.')
+        raw_ds['mat'] = id2mat(raw_ds['model'], raw_ds['news'])
     else:
         raise ValueError('Invalid model name!')
     return raw_ds
