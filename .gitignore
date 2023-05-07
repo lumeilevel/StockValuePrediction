@@ -9,6 +9,7 @@ reference/
 
 # Model structure
 model/structure/
+model/hub_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

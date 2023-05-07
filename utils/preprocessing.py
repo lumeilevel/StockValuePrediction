@@ -15,23 +15,27 @@ import numpy as np
 from bs4 import BeautifulSoup
 
 
-def processContent(content):
+def processContent(content, stopWords):
     news = eval(content)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         news['title'] = BeautifulSoup(news['title'].lower(), 'html.parser').get_text().replace('\n', '')
         news['content'] = BeautifulSoup(news['content'].lower(), 'html.parser').get_text().replace('\n', '')
     news['content'] = re.sub(r'\s+', '', news['content'])
-    stopWords = "：，。；;、（）【】“”‘’《》?？！!~`·<>#￥$@*^_|/——①②③④⑤⑥⑦⑧⑨⑩(),&的个并且么之也些于" \
-                "以诸等们乎而和即及叫吧呀呗呵哪尔拿宁你我他她它将就尽已得彼怎打把被替故某着给若虽让赶起然那随除出儿"
     for i in stopWords:
+        news['title'] = news['title'].replace(i, '')
         news['content'] = news['content'].replace(i, '')
     return news
 
 
-def bertData(raw='./data/news.txt'):
+def newsData(model='bert', raw='./data/news.txt'):
+    if model == 'word2vec':
+        stopWords = "：，。；;、（）【】“”‘’《》?？！!~`·<>#￥$@*^_|/——①②③④⑤⑥⑦⑧⑨⑩(),&之为"
+    else:
+        stopWords = "：，。；;、（）【】“”‘’《》?？！!~`·<>#￥$@*^_|/——①②③④⑤⑥⑦⑧⑨⑩(),&的个并且么之也些于" \
+                    "以诸等们乎而和即及叫吧呀呗呵哪尔拿宁你我他她它将就尽已得彼怎打把被替故某着给若虽让赶起然那随除出儿"
     with codecs.open(raw, "r", "utf-8") as f:
-        news = [processContent(i) for i in f.readlines()]
+        news = [processContent(i, stopWords) for i in f.readlines()]
     # convert it to a dictionary with `id` as key
     news = {str(d['id']): (d['title'], d['content']) for d in news}
     return news
@@ -108,7 +112,7 @@ def getDistribution(raw_train, raw_valid):
 
 
 def preprocess(model):
-    raw_ds = {'news': bertData()}
+    raw_ds = {'news': newsData(model=model)}
     raw_ds['train'], raw_ds['test'], numTrainID, numTestID = eda(raw_ds['news'])
     if model == 'bert':
         raw_ds['train'], raw_ds['valid'] = getValidData(raw_ds['train'], 'bert')
@@ -118,6 +122,8 @@ def preprocess(model):
         raw_ds['test_reg'] = set([ID for line in raw_ds['test'] for ID in line if ID not in raw_ds['score']])
         raw_ds['train_reg'], raw_ds['valid_reg'] = getValidData(raw_ds['score'], 'tfcm')
         raw_ds['train_cls'], raw_ds['valid_cls'] = id2vec(raw_ds['train'], raw_ds['score'])
+    elif model == 'word2vec':
+        print('Loading word2vec model...')
     else:
         raise ValueError('Invalid model name!')
     return raw_ds
