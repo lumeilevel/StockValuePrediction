@@ -127,8 +127,8 @@ def id2mat(cn_model, corpus, titleK=1, contentK=4, extra=5):
             # pad contentVec to length contentK
             contentVec += [np.zeros(dim)] * (contentK - k)
 
-        mat[int(ID)] = np.array(titleVec + contentVec)
-    mat[0] = np.zeros((titleK + contentK, dim))
+        mat[ID] = np.array(titleVec + contentVec)
+    mat['0'] = np.zeros((titleK + contentK, dim))
     return mat
 
 
