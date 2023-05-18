@@ -1,3 +1,5 @@
+# StockValuePrediction
+
 Implements 2 models to classify stock value related texts.
 
 The models are based on large pre-trained Foundation Models.
